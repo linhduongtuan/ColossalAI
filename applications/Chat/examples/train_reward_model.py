@@ -20,7 +20,7 @@ from transformers import AutoTokenizer, BloomTokenizerFast, DebertaV2Tokenizer, 
 from transformers.models.gpt2.tokenization_gpt2 import GPT2Tokenizer
 
 from colossalai.nn.optimizer import HybridAdam
-
+from timm.optim.lion import Lion
 
 def train(args):
     # configure strategy
@@ -80,7 +80,8 @@ def train(args):
     if args.strategy.startswith('colossalai'):
         optim = HybridAdam(model.parameters(), lr=5e-6)
     else:
-        optim = Adam(model.parameters(), lr=5e-6)
+        #optim = Adam(model.parameters(), lr=5e-6)
+        optim = Lion(model.parameters(), lr=5e-6)
 
     # configure loss function
     if args.loss_fn == 'log_sig':
@@ -141,15 +142,15 @@ if __name__ == '__main__':
                         choices=['naive', 'ddp', 'colossalai_gemini', 'colossalai_zero2'],
                         default='naive')
     parser.add_argument('--model', choices=['gpt2', 'bloom', 'opt', 'deberta', 'llama'], default='bloom')
-    parser.add_argument('--pretrain', type=str, default=None)
-    parser.add_argument('--model_path', type=str, default=None)
+    parser.add_argument('--pretrain', type=str, default='bigscience/bloomz-560m')
+    parser.add_argument('--model_path', type=str, default='/home/linh/Downloads/ColossalAI-main/weights/sft')
     parser.add_argument('--need_optim_ckpt', type=bool, default=False)
     parser.add_argument('--dataset',
                         type=str,
                         choices=['Anthropic/hh-rlhf', 'Dahoas/rm-static'],
                         default='Dahoas/rm-static')
     parser.add_argument('--subset', type=str, default=None)
-    parser.add_argument('--save_path', type=str, default='rm_ckpt')
+    parser.add_argument('--save_path', type=str, default='/home/linh/Downloads/ColossalAI-main/weights/reward')
     parser.add_argument('--max_epochs', type=int, default=1)
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--max_len', type=int, default=512)

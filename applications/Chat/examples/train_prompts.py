@@ -17,7 +17,7 @@ from torch.utils.data.distributed import DistributedSampler
 from transformers import AutoTokenizer, BloomTokenizerFast, GPT2Tokenizer, LlamaTokenizer
 
 from colossalai.nn.optimizer import HybridAdam
-
+from timm.optim.lion import Lion
 
 def main(args):
     # configure strategy
@@ -106,8 +106,10 @@ def main(args):
         actor_optim = HybridAdam(actor.parameters(), lr=1e-7)
         critic_optim = HybridAdam(critic.parameters(), lr=1e-7)
     else:
-        actor_optim = Adam(actor.parameters(), lr=1e-7)
-        critic_optim = Adam(critic.parameters(), lr=1e-7)
+        #actor_optim = Adam(actor.parameters(), lr=1e-7)
+        #critic_optim = Adam(critic.parameters(), lr=1e-7)
+        actor_optim = Lion(actor.parameters(), lr=1e-7)
+        critic_optim = Lion(critic.parameters(), lr=1e-7)
 
     # configure tokenizer
     if args.model == 'gpt2':
@@ -200,12 +202,12 @@ if __name__ == '__main__':
                         choices=['naive', 'ddp', 'colossalai_gemini', 'colossalai_zero2'],
                         default='naive',
                         help='strategy to use')
-    parser.add_argument('--model', default='gpt2', choices=['gpt2', 'bloom', 'opt', 'llama'])
-    parser.add_argument('--pretrain', type=str, default=None)
-    parser.add_argument('--rm_model', default=None, choices=['gpt2', 'bloom', 'opt', 'llama'])
-    parser.add_argument('--rm_path', type=str, default=None)
-    parser.add_argument('--rm_pretrain', type=str, default=None)
-    parser.add_argument('--save_path', type=str, default='actor_checkpoint_prompts')
+    parser.add_argument('--model', default='bloom', choices=['gpt2', 'bloom', 'opt', 'llama'])
+    parser.add_argument('--pretrain', type=str, default='bigscience/bloomz-560m')
+    parser.add_argument('--rm_model', default='bloom', choices=['gpt2', 'bloom', 'opt', 'llama'])
+    parser.add_argument('--rm_path', type=str, default='/home/linh/Downloads/ColossalAI-main/weights/reward/')
+    parser.add_argument('--rm_pretrain', type=str, default='bloom')
+    parser.add_argument('--save_path', type=str, default='/home/linh/Downloads/ColosallAI-main/weigths/actor_checkpoint_prompts')
     parser.add_argument('--need_optim_ckpt', type=bool, default=False)
     parser.add_argument('--num_episodes', type=int, default=10)
     parser.add_argument('--max_timesteps', type=int, default=10)

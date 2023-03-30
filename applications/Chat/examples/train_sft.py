@@ -23,7 +23,7 @@ from transformers.models.gpt2.tokenization_gpt2 import GPT2Tokenizer
 from colossalai.logging import get_dist_logger
 from colossalai.nn.optimizer import HybridAdam
 from colossalai.tensor import ColoParameter
-
+from timm.optim.lion import Lion
 
 def train(args):
     # configure strategy
@@ -57,7 +57,7 @@ def train(args):
         tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
         tokenizer.pad_token = tokenizer.eos_token
     elif args.model == 'bloom':
-        tokenizer = BloomTokenizerFast.from_pretrained(args.pretrain)
+        tokenizer = BloomTokenizerFast.from_pretrained('bigscience/bloom')
         tokenizer.pad_token = tokenizer.eos_token
     elif args.model == 'opt':
         tokenizer = AutoTokenizer.from_pretrained("facebook/opt-350m")
@@ -90,8 +90,8 @@ def train(args):
     if args.strategy.startswith('colossalai'):
         optim = HybridAdam(model.parameters(), lr=args.lr, clipping_norm=1.0)
     else:
-        optim = Adam(model.parameters(), lr=args.lr)
-
+        #optim = Adam(model.parameters(), lr=args.lr)
+        optim = Lion(model.parameters(), lr=args.lr)
     logger = get_dist_logger()
 
     # configure dataset
@@ -169,10 +169,10 @@ if __name__ == '__main__':
                         choices=['naive', 'ddp', 'colossalai_gemini', 'colossalai_zero2'],
                         default='naive')
     parser.add_argument('--model', choices=['gpt2', 'bloom', 'opt', 'llama'], default='bloom')
-    parser.add_argument('--pretrain', type=str, default=None)
+    parser.add_argument('--pretrain', type=str, default='bigscience/bloomz-560m')
     parser.add_argument('--dataset', type=str, default=None)
     parser.add_argument('--max_datasets_size', type=int, default=None)
-    parser.add_argument('--save_path', type=str, default='output')
+    parser.add_argument('--save_path', type=str, default='/home/linh/Downloads/ColossalAI-main/weights/sft/')
     parser.add_argument('--need_optim_ckpt', type=bool, default=False)
     parser.add_argument('--max_epochs', type=int, default=3)
     parser.add_argument('--batch_size', type=int, default=4)
